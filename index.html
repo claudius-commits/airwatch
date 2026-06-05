@@ -90,6 +90,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
     body { background: #eef4fb; }
@@ -472,6 +473,224 @@ function Toggle({ on, onChange, label }) {
       </div>
       <span className="text-xs font-medium" style={{ color: "#64748b" }}>{label}</span>
     </button>
+  );
+}
+
+// ── HISTORY CHART COMPONENT ──────────────────────────────────────────────────
+const RANGES = [
+  { id: "24h", label: "24 Hours",  points: 24, stepHours: 1  },
+  { id: "7d",  label: "7 Days",    points: 28, stepHours: 6  },
+  { id: "30d", label: "30 Days",   points: 30, stepHours: 24 },
+  { id: "3m",  label: "3 Months",  points: 90, stepHours: 24 },
+];
+
+const METRICS = [
+  { id: "aqi",  label: "AQI",   unit: "",       color: "#3b82f6", factor: v => v },
+  { id: "pm25", label: "PM₂.₅", unit: "µg/m³", color: "#f97316", factor: v => Math.round(v * 0.62) },
+  { id: "pm10", label: "PM₁₀",  unit: "µg/m³", color: "#a855f7", factor: v => Math.round(v * 0.93) },
+  { id: "no2",  label: "NO₂",   unit: "ppb",   color: "#ef4444", factor: v => Math.round(15 + v * 0.5) },
+  { id: "o3",   label: "O₃",    unit: "ppb",   color: "#16a34a", factor: v => Math.round(28 + v * 0.38) },
+  { id: "co",   label: "CO",    unit: "ppm",   color: "#64748b", factor: v => parseFloat((0.8 + v * 0.04).toFixed(1)) },
+];
+
+function generateHistory(baseAqi, rangeId) {
+  const r = RANGES.find(x => x.id === rangeId);
+  const now = new Date();
+  const labels = [], aqiVals = [];
+  let cur = baseAqi;
+
+  for (let i = r.points - 1; i >= 0; i--) {
+    const t = new Date(now.getTime() - i * r.stepHours * 3600000);
+    // Realistic daily cycle: worse in morning rush & evening
+    const h = t.getHours();
+    const cycle = Math.sin((h - 7) * Math.PI / 10) * 12 + Math.sin((h - 18) * Math.PI / 6) * 8;
+    // Slow random walk
+    cur = Math.max(8, Math.min(310, cur + (Math.random() - 0.46) * 14 + cycle * 0.2));
+    aqiVals.push(Math.round(cur));
+
+    if (rangeId === "24h") {
+      labels.push(t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    } else if (rangeId === "7d") {
+      labels.push(t.toLocaleDateString([], { weekday: "short" }) + " " +
+                  t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    } else {
+      labels.push(t.toLocaleDateString([], { month: "short", day: "numeric" }));
+    }
+  }
+  return { labels, aqiVals };
+}
+
+function HistoryChart({ globalAqi }) {
+  const canvasRef   = useRef(null);
+  const chartRef    = useRef(null);
+  const [range,   setRange]   = useState("7d");
+  const [metric,  setMetric]  = useState("aqi");
+  const [history, setHistory] = useState(() => generateHistory(globalAqi, "7d"));
+
+  // Rebuild history when range changes
+  useEffect(() => {
+    setHistory(generateHistory(globalAqi, range));
+  }, [range, globalAqi]);
+
+  // Build / update chart
+  useEffect(() => {
+    if (!canvasRef.current || !window.Chart) return;
+    const ctx = canvasRef.current.getContext("2d");
+    const m = METRICS.find(x => x.id === metric);
+    const data = history.aqiVals.map(v => m.factor(v));
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, 320);
+    grad.addColorStop(0, m.color + "33");
+    grad.addColorStop(1, m.color + "00");
+
+    const cfg = {
+      type: "line",
+      data: {
+        labels: history.labels,
+        datasets: [{
+          label: m.label + (m.unit ? ` (${m.unit})` : ""),
+          data,
+          borderColor: m.color,
+          borderWidth: 2.5,
+          pointRadius: history.labels.length > 30 ? 0 : 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: m.color,
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          fill: true,
+          backgroundColor: grad,
+          tension: 0.42,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#fff",
+            titleColor: "#1e3a5f",
+            bodyColor: "#475569",
+            borderColor: "#bfdbfe",
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 10,
+            titleFont: { family: "Inter", weight: "700", size: 13 },
+            bodyFont:  { family: "Inter", size: 12 },
+            callbacks: {
+              label: ctx => ` ${ctx.parsed.y}${m.unit ? " " + m.unit : ""}`,
+              title: items => items[0].label,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: "#f1f5f9", drawBorder: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { family: "Inter", size: 11 },
+              maxTicksLimit: 8,
+              maxRotation: 0,
+            },
+          },
+          y: {
+            grid: { color: "#f1f5f9", drawBorder: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { family: "Inter", size: 11 },
+              callback: val => val + (m.unit ? " " + m.unit : ""),
+            },
+            beginAtZero: false,
+          },
+        },
+      },
+    };
+
+    if (chartRef.current) {
+      chartRef.current.destroy();
+    }
+    chartRef.current = new window.Chart(ctx, cfg);
+
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [history, metric]);
+
+  const m = METRICS.find(x => x.id === metric);
+  const vals = history.aqiVals.map(v => m.factor(v));
+  const avg  = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  const peak = Math.max(...vals);
+  const low  = Math.min(...vals);
+
+  return (
+    <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.22s" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+        <div>
+          <h2 className="section-label">POLLUTION HISTORY</h2>
+          <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Historical air quality data with adjustable timeframe</p>
+        </div>
+        {/* Stat pills */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {[["Avg", avg], ["Peak", peak], ["Low", low]].map(([lbl, val]) => (
+            <div key={lbl} style={{ padding: "6px 14px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "#93c5fd", fontWeight: 700, letterSpacing: "0.06em" }}>{lbl}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#1e40af" }}>{val}{m.unit ? " " + m.unit : ""}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Range + Metric selectors */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20, justifyContent: "space-between", alignItems: "center" }}>
+        {/* Range pills */}
+        <div style={{ display: "flex", gap: 6, background: "#f1f5f9", padding: 4, borderRadius: 14 }}>
+          {RANGES.map(r => (
+            <button key={r.id} onClick={() => setRange(r.id)} style={{
+              padding: "7px 16px", borderRadius: 10, border: "none", cursor: "pointer",
+              fontFamily: "Inter,sans-serif", fontSize: 13, fontWeight: 600,
+              background: range === r.id ? "#fff" : "transparent",
+              color:      range === r.id ? "#1e40af" : "#64748b",
+              boxShadow:  range === r.id ? "0 1px 6px rgba(37,99,235,0.12)" : "none",
+              transition: "all 0.2s ease",
+            }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+        {/* Metric pills */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {METRICS.map(met => (
+            <button key={met.id} onClick={() => setMetric(met.id)} style={{
+              padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+              fontFamily: "Inter,sans-serif", fontSize: 12, fontWeight: 600,
+              background: metric === met.id ? met.color : "#f1f5f9",
+              color:      metric === met.id ? "#fff" : "#64748b",
+              transition: "all 0.2s ease",
+            }}
+              dangerouslySetInnerHTML={{ __html: met.label + (met.unit ? ` <span style="opacity:0.7;font-weight:400">${met.unit}</span>` : "") }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ height: 280, position: "relative" }}>
+        <canvas ref={canvasRef} />
+      </div>
+
+      {/* AQI threshold lines legend */}
+      {metric === "aqi" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", marginTop: 14 }}>
+          {AQI_LEVELS.map(l => (
+            <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 20, height: 2, borderRadius: 1, background: l.color }} />
+              <span style={{ fontSize: 11, color: "#64748b" }}>{l.label} ≤{l.max}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -950,6 +1169,9 @@ function App() {
             ))}
           </div>
         </div>
+
+        {/* ── HISTORY CHART ────────────────────────────────────────────────── */}
+        <HistoryChart globalAqi={aqi} />
 
         {/* ── BERLIN MAP ───────────────────────────────────────────────────── */}
         <BerlinMap globalAqi={aqi} />
