@@ -20,32 +20,32 @@
       function renderGate() {
         document.documentElement.style.background = "#0a0f1e";
         document.addEventListener("DOMContentLoaded", function() {
-          document.body.style.cssText = "margin:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;";
+          document.body.style.cssText = "margin:0;background:linear-gradient(160deg,#eff6ff 0%,#dbeafe 40%,#ede9fe 100%);display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;";
           document.body.innerHTML = `
             <div id="gate" style="width:100%;max-width:400px;padding:2rem;">
-              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:2.5rem;backdrop-filter:blur(20px);">
+              <div style="background:#ffffff;border:1px solid #bfdbfe;border-radius:24px;padding:2.5rem;box-shadow:0 8px 40px rgba(37,99,235,0.12),0 2px 8px rgba(37,99,235,0.06);">
                 <div style="text-align:center;margin-bottom:2rem;">
                   <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:1rem;">
-                    <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;"></div>
-                    <span style="color:rgba(255,255,255,0.35);font-size:11px;font-weight:600;letter-spacing:0.1em;">CLIENT PREVIEW</span>
+                    <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.5);"></div>
+                    <span style="color:#93c5fd;font-size:11px;font-weight:700;letter-spacing:0.1em;">CLIENT PREVIEW</span>
                   </div>
-                  <h1 style="color:#fff;font-size:2rem;font-weight:900;margin:0 0 0.5rem;">AirWatch</h1>
-                  <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Real-Time Air Quality Dashboard</p>
+                  <h1 style="background:linear-gradient(135deg,#1e40af,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2rem;font-weight:900;margin:0 0 0.5rem;">AirWatch</h1>
+                  <p style="color:#64748b;font-size:14px;margin:0;">Real-Time Air Quality Dashboard</p>
                 </div>
-                <div id="err" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:12px;margin-bottom:1rem;color:#fca5a5;font-size:13px;text-align:center;">
+                <div id="err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px;margin-bottom:1rem;color:#dc2626;font-size:13px;text-align:center;">
                   Incorrect password. Please try again.
                 </div>
                 <input id="pw" type="password" placeholder="Enter preview password"
-                  style="width:100%;box-sizing:border-box;padding:14px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:15px;outline:none;margin-bottom:12px;"
+                  style="width:100%;box-sizing:border-box;padding:14px 16px;background:#f8faff;border:1px solid #bfdbfe;border-radius:12px;color:#1e3a5f;font-size:15px;outline:none;margin-bottom:12px;"
                   onkeydown="if(event.key==='Enter')window._checkPass()"
-                  onfocus="this.style.borderColor='rgba(46,117,182,0.6)'"
-                  onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+                  onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'"
+                  onblur="this.style.borderColor='#bfdbfe';this.style.boxShadow='none'" />
                 <button onclick="window._checkPass()"
-                  style="width:100%;padding:14px;background:#2E75B6;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s;"
-                  onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                  style="width:100%;padding:14px;background:linear-gradient(135deg,#1e40af,#2563eb);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s;box-shadow:0 4px 14px rgba(37,99,235,0.3);"
+                  onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
                   View Preview →
                 </button>
-                <p style="color:rgba(255,255,255,0.2);font-size:12px;text-align:center;margin:1.5rem 0 0;">
+                <p style="color:#93c5fd;font-size:12px;text-align:center;margin:1.5rem 0 0;">
                   Shared by your agency · Confidential
                 </p>
               </div>
@@ -90,28 +90,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     * { font-family: 'Inter', sans-serif; }
-    body { background: #0a0f1e; }
+    body { background: #eef4fb; }
 
     @keyframes pulse-ring {
-      0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,255,255,0.15); }
-      70%  { transform: scale(1);    box-shadow: 0 0 0 20px rgba(255,255,255,0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+      0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46,117,182,0.25); }
+      70%  { transform: scale(1);    box-shadow: 0 0 0 20px rgba(46,117,182,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46,117,182,0); }
     }
     @keyframes float {
       0%,100% { transform: translateY(0px); }
       50%      { transform: translateY(-6px); }
     }
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
     @keyframes fadeInUp {
       from { opacity:0; transform:translateY(16px); }
       to   { opacity:1; transform:translateY(0); }
-    }
-    @keyframes spin-slow {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
     }
     @keyframes bar-fill {
       from { width: 0%; }
@@ -121,49 +113,41 @@
     .pulse-ring { animation: pulse-ring 2.5s ease-in-out infinite; }
     .float      { animation: float 4s ease-in-out infinite; }
     .fade-in-up { animation: fadeInUp 0.5s ease both; }
-    .spin-slow  { animation: spin-slow 8s linear infinite; }
 
-    .glass {
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.08);
+    .card {
+      background: #ffffff;
+      border: 1px solid #dbeafe;
+      box-shadow: 0 2px 16px rgba(37,99,235,0.07), 0 1px 3px rgba(37,99,235,0.05);
     }
-    .glass-hover:hover {
-      background: rgba(255,255,255,0.07);
-      border-color: rgba(255,255,255,0.14);
+    .card-hover:hover {
+      background: #f8fbff;
+      border-color: #bfdbfe;
       transition: all 0.3s ease;
     }
     .gradient-text {
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .aqi-glow {
-      filter: drop-shadow(0 0 30px var(--glow-color));
-    }
-    .bar-animated {
-      animation: bar-fill 1.2s cubic-bezier(0.4,0,0.2,1) forwards;
-    }
 
     ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    ::-webkit-scrollbar-track { background: #dbeafe; }
+    ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 2px; }
 
-    .profile-btn {
-      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-    }
+    .profile-btn { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
     .profile-btn:hover { transform: translateY(-1px); }
     .profile-btn.active { transform: translateY(0); }
 
-    .forecast-bar {
-      transition: height 0.8s cubic-bezier(0.4,0,0.2,1);
-    }
-    .toggle-track {
-      transition: background 0.3s ease;
-    }
-    .toggle-thumb {
-      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    .forecast-bar { transition: height 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .toggle-track  { transition: background 0.3s ease; }
+    .toggle-thumb  { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+
+    .section-label {
+      color: #93c5fd;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -175,12 +159,12 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 // ── AQI CONFIG ──────────────────────────────────────────────────────────────
 const AQI_LEVELS = [
-  { max:  50, label: "Good",            sub: "Air quality is ideal",                     color: "#22c55e", bg: "rgba(34,197,94,0.12)",   text: "#86efac", badge: "#166534", glow: "rgba(34,197,94,0.4)"  },
-  { max: 100, label: "Moderate",        sub: "Acceptable for most people",               color: "#eab308", bg: "rgba(234,179,8,0.12)",   text: "#fde047", badge: "#713f12", glow: "rgba(234,179,8,0.4)"  },
-  { max: 150, label: "Sensitive",       sub: "Sensitive groups may be affected",         color: "#f97316", bg: "rgba(249,115,22,0.12)",  text: "#fdba74", badge: "#7c2d12", glow: "rgba(249,115,22,0.4)" },
-  { max: 200, label: "Unhealthy",       sub: "Everyone may begin to feel effects",       color: "#ef4444", bg: "rgba(239,68,68,0.12)",   text: "#fca5a5", badge: "#7f1d1d", glow: "rgba(239,68,68,0.4)"  },
-  { max: 300, label: "Very Unhealthy",  sub: "Health warnings for everyone",             color: "#a855f7", bg: "rgba(168,85,247,0.12)",  text: "#d8b4fe", badge: "#4a1d96", glow: "rgba(168,85,247,0.4)" },
-  { max: 500, label: "Hazardous",       sub: "Emergency conditions — stay indoors",      color: "#be123c", bg: "rgba(190,18,60,0.12)",   text: "#fda4af", badge: "#881337", glow: "rgba(190,18,60,0.4)"  },
+  { max:  50, label: "Good",            sub: "Air quality is ideal",                     color: "#16a34a", bg: "#f0fdf4", text: "#15803d", badge: "#dcfce7", glow: "rgba(22,163,74,0.2)"   },
+  { max: 100, label: "Moderate",        sub: "Acceptable for most people",               color: "#d97706", bg: "#fffbeb", text: "#b45309", badge: "#fef3c7", glow: "rgba(217,119,6,0.2)"   },
+  { max: 150, label: "Sensitive",       sub: "Sensitive groups may be affected",         color: "#ea580c", bg: "#fff7ed", text: "#c2410c", badge: "#ffedd5", glow: "rgba(234,88,12,0.2)"   },
+  { max: 200, label: "Unhealthy",       sub: "Everyone may begin to feel effects",       color: "#dc2626", bg: "#fef2f2", text: "#b91c1c", badge: "#fee2e2", glow: "rgba(220,38,38,0.2)"   },
+  { max: 300, label: "Very Unhealthy",  sub: "Health warnings for everyone",             color: "#9333ea", bg: "#faf5ff", text: "#7e22ce", badge: "#f3e8ff", glow: "rgba(147,51,234,0.2)"  },
+  { max: 500, label: "Hazardous",       sub: "Emergency conditions — stay indoors",      color: "#be123c", bg: "#fff1f2", text: "#9f1239", badge: "#ffe4e6", glow: "rgba(190,18,60,0.2)"   },
 ];
 
 function getAQILevel(aqi) {
@@ -310,7 +294,7 @@ function AQIGauge({ aqi, level }) {
         {/* Track */}
         <path
           d={`M ${stroke/2} 100 A ${norm} ${norm} 0 0 1 ${200-stroke/2} 100`}
-          fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} strokeLinecap="round"
+          fill="none" stroke="#dbeafe" strokeWidth={stroke} strokeLinecap="round"
         />
         {/* Fill */}
         <path
@@ -335,7 +319,7 @@ function AQIGauge({ aqi, level }) {
         <span className="text-5xl font-black" style={{ color: level.color, textShadow: `0 0 30px ${level.glow}`, transition: "color 0.8s ease" }}>
           {aqi}
         </span>
-        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>AQI</span>
+        <span className="text-xs font-medium" style={{ color: "#93c5fd" }}>AQI</span>
       </div>
     </div>
   );
@@ -348,15 +332,15 @@ function PollutantBar({ p, value, level }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}
+        <span className="text-xs font-semibold" style={{ color: "#475569" }}
           dangerouslySetInnerHTML={{ __html: p.label }} />
         <span className="text-xs font-bold" style={{ color: level.text }}>
-          {value} <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>{p.unit}</span>
+          {value} <span style={{ color: "#94a3b8", fontWeight: 400 }}>{p.unit}</span>
         </span>
       </div>
-      <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "#eff6ff" }}>
         {/* Good threshold marker */}
-        <div className="absolute top-0 bottom-0 w-px" style={{ left: `${good}%`, background: "rgba(255,255,255,0.2)" }} />
+        <div className="absolute top-0 bottom-0 w-px" style={{ left: `${good}%`, background: "#cbd5e1" }} />
         {/* Fill */}
         <div className="h-full rounded-full" style={{
           width: `${pct}%`, background: level.color,
@@ -384,7 +368,7 @@ function ForecastBar({ item, maxAqi, index }) {
           minHeight: 6,
         }} />
       </div>
-      <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
+      <span className="text-xs" style={{ color: "#64748b" }}>{label}</span>
     </div>
   );
 }
@@ -393,10 +377,10 @@ function ForecastBar({ item, maxAqi, index }) {
 function Toggle({ on, onChange, label }) {
   return (
     <button onClick={() => onChange(!on)} className="flex items-center gap-2 cursor-pointer">
-      <div className="toggle-track w-10 h-5 rounded-full relative" style={{ background: on ? "#2E75B6" : "rgba(255,255,255,0.1)" }}>
+      <div className="toggle-track w-10 h-5 rounded-full relative" style={{ background: on ? "#2563eb" : "#cbd5e1" }}>
         <div className="toggle-thumb absolute top-0.5 w-4 h-4 rounded-full bg-white" style={{ left: on ? "calc(100% - 18px)" : "2px" }} />
       </div>
-      <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+      <span className="text-xs font-medium" style={{ color: "#64748b" }}>{label}</span>
     </button>
   );
 }
@@ -449,12 +433,12 @@ function App() {
   const primaryPollutant = "PM₂.₅";
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1530 50%, #0a0f1e 100%)" }}>
+    <div className="min-h-screen p-4 md:p-8" style={{ background: "linear-gradient(160deg, #eff6ff 0%, #dbeafe 40%, #ede9fe 100%)" }}>
       {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute rounded-full" style={{
-          width: 600, height: 600, top: -200, left: "50%", transform: "translateX(-50%)",
-          background: `radial-gradient(circle, ${level.color}18 0%, transparent 70%)`,
+          width: 700, height: 700, top: -250, left: "50%", transform: "translateX(-50%)",
+          background: `radial-gradient(circle, ${level.glow} 0%, transparent 70%)`,
           transition: "background 1.5s ease"
         }} />
       </div>
@@ -465,26 +449,24 @@ function App() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ background: level.color, boxShadow: `0 0 8px ${level.color}` }}>
-                <div className="w-2 h-2 rounded-full pulse-ring" style={{ background: level.color }} />
-              </div>
-              <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>LIVE</span>
+              <div className="w-2 h-2 rounded-full pulse-ring" style={{ background: level.color }} />
+              <span className="text-xs font-semibold" style={{ color: "#93c5fd", letterSpacing: "0.08em" }}>LIVE</span>
             </div>
             <h1 className="text-2xl font-black gradient-text mt-1">AirWatch</h1>
           </div>
           <div className="text-right">
             <div className="flex items-center gap-1 justify-end">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
               </svg>
-              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{location}</span>
+              <span className="text-sm font-medium" style={{ color: "#1e40af" }}>{location}</span>
             </div>
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Updated {timeStr}</span>
+            <span className="text-xs" style={{ color: "#93c5fd" }}>Updated {timeStr}</span>
           </div>
         </div>
 
         {/* ── HERO CARD ────────────────────────────────────────────────────── */}
-        <div className="glass rounded-3xl p-6 md:p-8 fade-in-up" style={{ border: `1px solid ${level.color}22` }}>
+        <div className="card rounded-3xl p-6 md:p-8 fade-in-up" style={{ border: `1px solid ${level.color}44` }}>
           <div className="flex flex-col md:flex-row items-center gap-8">
 
             {/* Gauge */}
@@ -500,16 +482,16 @@ function App() {
                     {level.label}
                   </span>
                   {/* Trend indicator */}
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                    <span style={{ fontSize: 12, color: trending === "up" ? "#ef4444" : trending === "down" ? "#22c55e" : "rgba(255,255,255,0.4)" }}>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "#eff6ff" }}>
+                    <span style={{ fontSize: 12, color: trending === "up" ? "#ef4444" : trending === "down" ? "#16a34a" : "#94a3b8" }}>
                       {trending === "up" ? "↑" : trending === "down" ? "↓" : "→"}
                     </span>
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    <span className="text-xs" style={{ color: "#64748b" }}>
                       {trending === "up" ? "Rising" : trending === "down" ? "Improving" : "Stable"}
                     </span>
                   </div>
                 </div>
-                <p className="text-lg mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{level.sub}</p>
+                <p className="text-lg mt-1" style={{ color: "#64748b" }}>{level.sub}</p>
               </div>
 
               {/* Context chips */}
@@ -517,10 +499,10 @@ function App() {
                 <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: level.bg, color: level.text, border: `1px solid ${level.color}33` }}>
                   Primary: {primaryPollutant}
                 </div>
-                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe" }}>
                   AQI {aqi} / 500
                 </div>
-                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe" }}>
                   {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                 </div>
               </div>
@@ -541,23 +523,23 @@ function App() {
         </div>
 
         {/* ── POLLUTANT BREAKDOWN ──────────────────────────────────────────── */}
-        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.1s" }}>
-          <h2 className="text-sm font-bold mb-4" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>POLLUTANT BREAKDOWN</h2>
+        <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <h2 className="section-label mb-4">POLLUTANT BREAKDOWN</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {POLLUTANTS.map(p => (
               <PollutantBar key={p.id} p={p} value={pollutants[p.id]} level={level} />
             ))}
           </div>
-          <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
+          <p className="text-xs mt-4" style={{ color: "#93c5fd" }}>
             Vertical line indicates WHO safe threshold. Values update every 8 seconds.
           </p>
         </div>
 
         {/* ── FORECAST ────────────────────────────────────────────────────── */}
-        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.2s" }}>
+        <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.2s" }}>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>6-HOUR FORECAST</h2>
-            <span className="text-xs px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>Simulated</span>
+            <h2 className="section-label">6-HOUR FORECAST</h2>
+            <span className="text-xs px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "#93c5fd" }}>Simulated</span>
           </div>
           <div className="flex gap-2 items-end">
             {forecast.map((item, i) => (
@@ -569,16 +551,16 @@ function App() {
             {AQI_LEVELS.map(l => (
               <div key={l.label} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
-                <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{l.label}</span>
+                <span className="text-xs" style={{ color: "#64748b" }}>{l.label}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── PERSONALISED RECOMMENDATIONS ────────────────────────────────── */}
-        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.3s" }}>
+        <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.3s" }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>PERSONALISED ADVICE</h2>
+            <h2 className="section-label">PERSONALISED ADVICE</h2>
             <Toggle on={showRecs} onChange={setShowRecs} label="Show recommendations" />
           </div>
 
@@ -590,9 +572,9 @@ function App() {
                 onClick={() => setProfile(p.id)}
                 className={`profile-btn flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold ${profile === p.id ? "active" : ""}`}
                 style={{
-                  background: profile === p.id ? level.bg : "rgba(255,255,255,0.04)",
-                  border:     profile === p.id ? `1px solid ${level.color}44` : "1px solid rgba(255,255,255,0.08)",
-                  color:      profile === p.id ? level.text : "rgba(255,255,255,0.4)",
+                  background: profile === p.id ? level.bg : "#f1f5f9",
+                  border:     profile === p.id ? `1px solid ${level.color}66` : "1px solid #e2e8f0",
+                  color:      profile === p.id ? level.text : "#64748b",
                 }}
               >
                 <span>{p.icon}</span>
@@ -604,8 +586,8 @@ function App() {
           </div>
 
           {/* Selected profile description */}
-          <div className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Showing advice for: <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>
+          <div className="text-xs mb-4" style={{ color: "#94a3b8" }}>
+            Showing advice for: <span style={{ color: "#1e40af", fontWeight: 600 }}>
               {PROFILES.find(p => p.id === profile)?.desc}
             </span>
           </div>
@@ -614,23 +596,23 @@ function App() {
           {showRecs && (
             <div className="space-y-2">
               {recs.map((rec, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl fade-in-up glass-hover"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", animationDelay: `${i * 0.06}s` }}>
-                  <span className="text-sm leading-snug" style={{ color: "rgba(255,255,255,0.75)" }}>{rec}</span>
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl fade-in-up card-hover"
+                  style={{ background: "#f8fbff", border: "1px solid #dbeafe", animationDelay: `${i * 0.06}s` }}>
+                  <span className="text-sm leading-snug" style={{ color: "#1e3a5f" }}>{rec}</span>
                 </div>
               ))}
             </div>
           )}
           {!showRecs && (
-            <div className="text-center py-6 text-sm" style={{ color: "rgba(255,255,255,0.2)" }}>
+            <div className="text-center py-6 text-sm" style={{ color: "#93c5fd" }}>
               Toggle recommendations on to see personalised advice
             </div>
           )}
         </div>
 
         {/* ── AQI SCALE REFERENCE ──────────────────────────────────────────── */}
-        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.4s" }}>
-          <h2 className="text-sm font-bold mb-4" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>AQI SCALE REFERENCE</h2>
+        <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.4s" }}>
+          <h2 className="section-label mb-4">AQI SCALE REFERENCE</h2>
           <div className="space-y-2">
             {AQI_LEVELS.map((l, i) => {
               const prev = i === 0 ? 0 : AQI_LEVELS[i-1].max + 1;
@@ -638,15 +620,15 @@ function App() {
               return (
                 <div key={l.label} className="flex items-center gap-3 p-2 rounded-xl" style={{
                   background: isActive ? l.bg : "transparent",
-                  border: isActive ? `1px solid ${l.color}33` : "1px solid transparent",
+                  border: isActive ? `1px solid ${l.color}55` : "1px solid transparent",
                   transition: "all 0.5s ease"
                 }}>
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: l.color, boxShadow: isActive ? `0 0 8px ${l.color}` : "none" }} />
                   <div className="flex-1 flex items-center justify-between">
-                    <span className="text-sm font-semibold" style={{ color: isActive ? l.text : "rgba(255,255,255,0.5)" }}>{l.label}</span>
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{prev}–{l.max}</span>
+                    <span className="text-sm font-semibold" style={{ color: isActive ? l.text : "#64748b" }}>{l.label}</span>
+                    <span className="text-xs" style={{ color: "#94a3b8" }}>{prev}–{l.max}</span>
                   </div>
-                  {isActive && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: l.color, color: "#000" }}>NOW</span>}
+                  {isActive && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: l.color, color: "#fff" }}>NOW</span>}
                 </div>
               );
             })}
@@ -655,7 +637,7 @@ function App() {
 
         {/* Footer */}
         <div className="text-center py-4">
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.15)" }}>
+          <p className="text-xs" style={{ color: "#93c5fd" }}>
             AirWatch — Simulated data for demonstration purposes · Updates every 8s
           </p>
         </div>
