@@ -88,6 +88,8 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     * { font-family: 'Inter', sans-serif; }
     body { background: #eef4fb; }
@@ -149,6 +151,37 @@
       font-size: 11px;
       font-weight: 700;
     }
+
+    /* Leaflet overrides for light theme */
+    .leaflet-container { font-family: 'Inter', sans-serif; background: #eff6ff; }
+    .leaflet-tooltip {
+      background: #fff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 8px 12px;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+      font-family: 'Inter', sans-serif;
+    }
+    .leaflet-tooltip::before { display: none; }
+    .leaflet-control-zoom a {
+      background: #fff !important;
+      border-color: #bfdbfe !important;
+      color: #2563eb !important;
+      font-weight: 700;
+    }
+    .leaflet-control-zoom a:hover { background: #eff6ff !important; }
+    .leaflet-control-attribution {
+      background: rgba(255,255,255,0.8) !important;
+      color: #93c5fd !important;
+      font-size: 10px;
+    }
+    .leaflet-control-attribution a { color: #3b82f6 !important; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.15);
+      border: 1px solid #bfdbfe;
+    }
+    .leaflet-popup-tip { background: #fff; }
   </style>
 </head>
 <body>
@@ -234,6 +267,63 @@ function getProfileRecs(profile, aqi) {
 }
 
 // ── POLLUTANTS ───────────────────────────────────────────────────────────────
+// ── BERLIN POSTAL CODE → DISTRICT MAP ───────────────────────────────────────
+const POSTAL_TO_DISTRICT = {
+  "10115":"Mitte","10117":"Mitte","10119":"Mitte","10135":"Mitte","10178":"Mitte","10179":"Mitte",
+  "10243":"Friedrichshain-Kreuzberg","10245":"Friedrichshain-Kreuzberg","10247":"Friedrichshain-Kreuzberg",
+  "10249":"Friedrichshain-Kreuzberg","10961":"Friedrichshain-Kreuzberg","10963":"Friedrichshain-Kreuzberg",
+  "10965":"Friedrichshain-Kreuzberg","10967":"Friedrichshain-Kreuzberg","10969":"Friedrichshain-Kreuzberg",
+  "10997":"Friedrichshain-Kreuzberg","10999":"Friedrichshain-Kreuzberg",
+  "13086":"Pankow","13088":"Pankow","13089":"Pankow","13125":"Pankow","13127":"Pankow",
+  "13129":"Pankow","13156":"Pankow","13158":"Pankow","13159":"Pankow","13187":"Pankow","13189":"Pankow",
+  "10585":"Charlottenburg-Wilmersdorf","10587":"Charlottenburg-Wilmersdorf","10589":"Charlottenburg-Wilmersdorf",
+  "10623":"Charlottenburg-Wilmersdorf","10625":"Charlottenburg-Wilmersdorf","10627":"Charlottenburg-Wilmersdorf",
+  "10629":"Charlottenburg-Wilmersdorf","10707":"Charlottenburg-Wilmersdorf","10709":"Charlottenburg-Wilmersdorf",
+  "10711":"Charlottenburg-Wilmersdorf","10713":"Charlottenburg-Wilmersdorf","10715":"Charlottenburg-Wilmersdorf",
+  "10717":"Charlottenburg-Wilmersdorf","10719":"Charlottenburg-Wilmersdorf",
+  "14050":"Charlottenburg-Wilmersdorf","14053":"Charlottenburg-Wilmersdorf","14055":"Charlottenburg-Wilmersdorf",
+  "14057":"Charlottenburg-Wilmersdorf","14059":"Charlottenburg-Wilmersdorf",
+  "13581":"Spandau","13583":"Spandau","13585":"Spandau","13587":"Spandau","13589":"Spandau",
+  "13591":"Spandau","13593":"Spandau","13595":"Spandau","13597":"Spandau","13599":"Spandau",
+  "12163":"Steglitz-Zehlendorf","12165":"Steglitz-Zehlendorf","12167":"Steglitz-Zehlendorf",
+  "12169":"Steglitz-Zehlendorf","12203":"Steglitz-Zehlendorf","12205":"Steglitz-Zehlendorf",
+  "12207":"Steglitz-Zehlendorf","12209":"Steglitz-Zehlendorf","12247":"Steglitz-Zehlendorf",
+  "14109":"Steglitz-Zehlendorf","14129":"Steglitz-Zehlendorf","14163":"Steglitz-Zehlendorf",
+  "14165":"Steglitz-Zehlendorf","14167":"Steglitz-Zehlendorf","14169":"Steglitz-Zehlendorf",
+  "14193":"Steglitz-Zehlendorf","14195":"Steglitz-Zehlendorf","14197":"Steglitz-Zehlendorf","14199":"Steglitz-Zehlendorf",
+  "10777":"Tempelhof-Schöneberg","10779":"Tempelhof-Schöneberg","10781":"Tempelhof-Schöneberg",
+  "10783":"Tempelhof-Schöneberg","10785":"Tempelhof-Schöneberg","10787":"Tempelhof-Schöneberg",
+  "10789":"Tempelhof-Schöneberg","12099":"Tempelhof-Schöneberg","12101":"Tempelhof-Schöneberg",
+  "12103":"Tempelhof-Schöneberg","12105":"Tempelhof-Schöneberg","12107":"Tempelhof-Schöneberg",
+  "12109":"Tempelhof-Schöneberg","12157":"Tempelhof-Schöneberg","12159":"Tempelhof-Schöneberg","12161":"Tempelhof-Schöneberg",
+  "12043":"Neukölln","12045":"Neukölln","12047":"Neukölln","12049":"Neukölln","12051":"Neukölln",
+  "12053":"Neukölln","12055":"Neukölln","12057":"Neukölln","12059":"Neukölln",
+  "12435":"Treptow-Köpenick","12437":"Treptow-Köpenick","12439":"Treptow-Köpenick",
+  "12459":"Treptow-Köpenick","12489":"Treptow-Köpenick","12524":"Treptow-Köpenick",
+  "12526":"Treptow-Köpenick","12527":"Treptow-Köpenick","12555":"Treptow-Köpenick",
+  "12557":"Treptow-Köpenick","12559":"Treptow-Köpenick",
+  "12619":"Marzahn-Hellersdorf","12621":"Marzahn-Hellersdorf","12623":"Marzahn-Hellersdorf",
+  "12627":"Marzahn-Hellersdorf","12629":"Marzahn-Hellersdorf","12679":"Marzahn-Hellersdorf",
+  "12681":"Marzahn-Hellersdorf","12683":"Marzahn-Hellersdorf","12685":"Marzahn-Hellersdorf",
+  "12687":"Marzahn-Hellersdorf","12689":"Marzahn-Hellersdorf",
+  "10315":"Lichtenberg","10317":"Lichtenberg","10318":"Lichtenberg","10319":"Lichtenberg",
+  "10365":"Lichtenberg","10367":"Lichtenberg","10369":"Lichtenberg",
+  "13051":"Lichtenberg","13053":"Lichtenberg","13055":"Lichtenberg","13057":"Lichtenberg","13059":"Lichtenberg",
+  "13403":"Reinickendorf","13405":"Reinickendorf","13407":"Reinickendorf","13409":"Reinickendorf",
+  "13435":"Reinickendorf","13437":"Reinickendorf","13439":"Reinickendorf",
+  "13465":"Reinickendorf","13467":"Reinickendorf","13469":"Reinickendorf",
+  "13503":"Reinickendorf","13505":"Reinickendorf","13507":"Reinickendorf","13509":"Reinickendorf",
+};
+
+// Fuzzy-match GeoJSON property → known district name
+const DISTRICT_KEYS = [...new Set(Object.values(POSTAL_TO_DISTRICT))];
+function matchDistrictName(raw) {
+  if (!raw) return null;
+  const norm = s => s.toLowerCase().replace(/[-\s]/g,'').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ä/g,'a').replace(/ß/g,'ss');
+  const nr = norm(raw);
+  return DISTRICT_KEYS.find(k => norm(k) === nr || nr.includes(norm(k)) || norm(k).includes(nr)) || null;
+}
+
 const POLLUTANTS = [
   { id: "pm25",  label: "PM₂.₅",  unit: "µg/m³", max: 150, good: 12  },
   { id: "pm10",  label: "PM₁₀",   unit: "µg/m³", max: 200, good: 20  },
@@ -382,6 +472,302 @@ function Toggle({ on, onChange, label }) {
       </div>
       <span className="text-xs font-medium" style={{ color: "#64748b" }}>{label}</span>
     </button>
+  );
+}
+
+// ── BERLIN MAP COMPONENT ─────────────────────────────────────────────────────
+function BerlinMap({ globalAqi }) {
+  const mapContainerRef = useRef(null);
+  const mapRef          = useRef(null);
+  const layersRef       = useRef({});
+  const selectedRef     = useRef(null);
+  const districtAqiRef  = useRef({});
+  const selectFnRef     = useRef(null);
+
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [postalInput,      setPostalInput]       = useState("");
+  const [suggestions,      setSuggestions]       = useState([]);
+  const [showSuggestions,  setShowSuggestions]   = useState(false);
+  const [mapLoaded,        setMapLoaded]         = useState(false);
+  const [mapError,         setMapError]          = useState(false);
+
+  // Generate per-district AQI values once, seeded from globalAqi
+  const [districtAqis] = useState(() => {
+    const aqis = {};
+    DISTRICT_KEYS.forEach(name => {
+      const v = Math.round((Math.random() - 0.5) * 55);
+      aqis[name] = Math.max(10, Math.min(320, globalAqi + v));
+    });
+    districtAqiRef.current = aqis;
+    return aqis;
+  });
+
+  // Helper: reset a layer to its normal style
+  function resetStyle(name) {
+    const lyr = layersRef.current[name];
+    if (!lyr) return;
+    const lvl = getAQILevel(districtAqiRef.current[name] || globalAqi);
+    lyr.setStyle({ fillColor: lvl.color, fillOpacity: 0.5, weight: 2, color: '#fff' });
+  }
+
+  // Select a district on the map
+  function selectDistrict(name) {
+    if (selectedRef.current && selectedRef.current !== name) resetStyle(selectedRef.current);
+    selectedRef.current = name;
+    setSelectedDistrict(name);
+    const lyr = layersRef.current[name];
+    if (lyr) {
+      lyr.setStyle({ fillOpacity: 0.85, weight: 3, color: '#1e40af' });
+      try { mapRef.current.fitBounds(lyr.getBounds(), { padding: [40, 40], maxZoom: 12 }); } catch(e){}
+    }
+  }
+  selectFnRef.current = selectDistrict;
+
+  // Clear selection
+  function clearSelection() {
+    if (selectedRef.current) resetStyle(selectedRef.current);
+    selectedRef.current = null;
+    setSelectedDistrict(null);
+    setPostalInput("");
+    setSuggestions([]);
+    if (mapRef.current) mapRef.current.setView([52.52, 13.405], 10);
+  }
+
+  // Initialise Leaflet map once
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+    const L = window.L;
+    if (!L) { setMapError(true); return; }
+
+    const map = L.map(mapContainerRef.current, {
+      center: [52.52, 13.405], zoom: 10, zoomControl: true,
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://openstreetmap.org">OSM</a> &copy; <a href="https://carto.com">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 16,
+    }).addTo(map);
+    mapRef.current = map;
+
+    function renderGeoJSON(geojson) {
+      L.geoJSON(geojson, {
+        style: f => {
+          const raw  = f.properties.spatial_name || f.properties.Bezirksname || f.properties.Bezirk ||
+                       f.properties.name || f.properties.NAME || f.properties.bezirk || "";
+          const name = matchDistrictName(raw) || raw;
+          const lvl  = getAQILevel(districtAqiRef.current[name] || globalAqi);
+          return { fillColor: lvl.color, fillOpacity: 0.5, color: '#fff', weight: 2, opacity: 1 };
+        },
+        onEachFeature: (f, lyr) => {
+          const raw  = f.properties.spatial_name || f.properties.Bezirksname || f.properties.Bezirk ||
+                       f.properties.name || f.properties.NAME || f.properties.bezirk || "";
+          const name = matchDistrictName(raw) || raw;
+          const dAqi = districtAqiRef.current[name] || globalAqi;
+          const lvl  = getAQILevel(dAqi);
+          layersRef.current[name] = lyr;
+
+          lyr.on({
+            mouseover: e => { if (selectedRef.current !== name) e.target.setStyle({ fillOpacity: 0.72, weight: 2.5 }); },
+            mouseout:  e => { if (selectedRef.current !== name) e.target.setStyle({ fillOpacity: 0.5,  weight: 2 }); },
+            click:     () => selectFnRef.current(name),
+          });
+
+          lyr.bindTooltip(
+            `<div style="font:700 13px Inter,sans-serif;color:#1e3a5f;margin-bottom:3px">${name}</div>` +
+            `<div style="font:800 17px Inter,sans-serif;color:${lvl.color}">${dAqi} <span style="font:600 12px Inter,sans-serif;color:#64748b">${lvl.label}</span></div>`,
+            { sticky: true, opacity: 1 }
+          );
+        }
+      }).addTo(map);
+      setMapLoaded(true);
+    }
+
+    // Try multiple public GeoJSON sources
+    const sources = [
+      'https://raw.githubusercontent.com/funkeinteraktiv/Berlin-Geodaten/master/berlin_bezirke.geojson',
+      'https://tsb-opendata.s3.eu-central-1.amazonaws.com/bezirksgrenzen/bezirksgrenzen.geojson',
+    ];
+    let idx = 0;
+    function tryNext() {
+      if (idx >= sources.length) { setMapError(true); return; }
+      fetch(sources[idx++])
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(renderGeoJSON)
+        .catch(tryNext);
+    }
+    tryNext();
+
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, []);
+
+  // Postal code input handler
+  function handlePostalChange(val) {
+    setPostalInput(val);
+    if (val.length >= 2) {
+      const matches = Object.keys(POSTAL_TO_DISTRICT).filter(pc => pc.startsWith(val)).slice(0, 8);
+      setSuggestions(matches);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+    }
+    if (val.length === 5 && POSTAL_TO_DISTRICT[val]) {
+      selectDistrict(POSTAL_TO_DISTRICT[val]);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }
+
+  function pickPostal(pc) {
+    setPostalInput(pc);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    if (POSTAL_TO_DISTRICT[pc]) selectDistrict(POSTAL_TO_DISTRICT[pc]);
+  }
+
+  const selAqi   = selectedDistrict ? (districtAqis[selectedDistrict] || globalAqi) : null;
+  const selLevel = selAqi ? getAQILevel(selAqi) : null;
+  const selPostals = selectedDistrict
+    ? Object.entries(POSTAL_TO_DISTRICT).filter(([,d]) => d === selectedDistrict).map(([pc]) => pc)
+    : [];
+
+  return (
+    <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.25s" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="section-label">BERLIN AIR QUALITY MAP</h2>
+          <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Click a district or search by postal code</p>
+        </div>
+        <span style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe", fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
+          12 Bezirke
+        </span>
+      </div>
+
+      {/* Postal code search */}
+      <div style={{ position: "relative", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text" inputMode="numeric" value={postalInput} maxLength={5}
+              placeholder="Search postal code (e.g. 10115, 12043…)"
+              onChange={e => handlePostalChange(e.target.value.replace(/\D/g,''))}
+              onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              style={{
+                width:"100%", boxSizing:"border-box", padding:"12px 14px 12px 36px",
+                background:"#f8fbff", border:"1px solid #bfdbfe", borderRadius:12,
+                color:"#1e3a5f", fontSize:14, outline:"none", fontFamily:"Inter,sans-serif",
+              }}
+              onFocusCapture={e => { e.target.style.borderColor="#2563eb"; e.target.style.boxShadow="0 0 0 3px rgba(37,99,235,0.1)"; }}
+              onBlurCapture={e => { e.target.style.borderColor="#bfdbfe"; e.target.style.boxShadow="none"; }}
+            />
+          </div>
+          {selectedDistrict && (
+            <button onClick={clearSelection} style={{
+              padding:"12px 16px", background:"#eff6ff", border:"1px solid #bfdbfe",
+              borderRadius:12, color:"#3b82f6", fontSize:13, fontWeight:600, cursor:"pointer",
+              whiteSpace:"nowrap",
+            }}>✕ Clear</button>
+          )}
+        </div>
+
+        {/* Autocomplete dropdown */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div style={{
+            position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:1000,
+            background:"#fff", border:"1px solid #bfdbfe", borderRadius:14,
+            boxShadow:"0 8px 32px rgba(37,99,235,0.13)", overflow:"hidden",
+          }}>
+            {suggestions.map((pc, i) => {
+              const d    = POSTAL_TO_DISTRICT[pc];
+              const dAqi = districtAqis[d] || globalAqi;
+              const lvl  = getAQILevel(dAqi);
+              return (
+                <div key={pc} onMouseDown={() => pickPostal(pc)} style={{
+                  padding:"10px 16px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center",
+                  borderBottom: i < suggestions.length-1 ? "1px solid #f1f5f9" : "none",
+                  background:"#fff",
+                }}
+                  onMouseOver={e => e.currentTarget.style.background="#f0f7ff"}
+                  onMouseOut={e => e.currentTarget.style.background="#fff"}>
+                  <div>
+                    <span style={{ fontWeight:700, color:"#1e3a5f", fontSize:14 }}>{pc}</span>
+                    <span style={{ color:"#64748b", fontSize:13, marginLeft:8 }}>{d}</span>
+                  </div>
+                  <span style={{ color:lvl.color, fontWeight:700, fontSize:13 }}>AQI {dAqi}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Selected district panel */}
+      {selectedDistrict && selLevel && (
+        <div className="fade-in-up" style={{
+          marginBottom:16, padding:"16px 20px", borderRadius:16,
+          background:selLevel.bg, border:`1px solid ${selLevel.color}44`,
+        }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
+            <div>
+              <div style={{ fontWeight:800, fontSize:18, color:"#1e3a5f" }}>{selectedDistrict}</div>
+              <div style={{ color:"#64748b", fontSize:13, marginTop:2 }}>{selLevel.sub}</div>
+              <div style={{ marginTop:10, display:"flex", flexWrap:"wrap", gap:4 }}>
+                {selPostals.map(pc => (
+                  <span key={pc} style={{
+                    padding:"2px 8px", borderRadius:8, fontSize:11, fontWeight:600,
+                    background:"rgba(255,255,255,0.7)", color:"#475569", border:"1px solid rgba(0,0,0,0.08)",
+                  }}>{pc}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontWeight:900, fontSize:36, color:selLevel.color, lineHeight:1 }}>{selAqi}</div>
+              <div style={{ fontWeight:700, fontSize:13, color:selLevel.text, marginTop:2 }}>{selLevel.label}</div>
+              <div style={{ fontSize:11, color:"#94a3b8", marginTop:4 }}>AQI / 500</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Map */}
+      <div style={{ borderRadius:16, overflow:"hidden", border:"1px solid #dbeafe", position:"relative" }}>
+        <div ref={mapContainerRef} style={{ height:440, width:"100%" }} />
+        {!mapLoaded && !mapError && (
+          <div style={{
+            position:"absolute", inset:0, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", background:"#f0f7ff",
+          }}>
+            <div style={{ fontSize:32, marginBottom:10 }}>🗺️</div>
+            <div style={{ color:"#3b82f6", fontWeight:600, fontSize:14 }}>Loading Berlin map…</div>
+            <div style={{ color:"#93c5fd", fontSize:12, marginTop:4 }}>Fetching district boundaries</div>
+          </div>
+        )}
+        {mapError && (
+          <div style={{
+            position:"absolute", inset:0, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", background:"#f0f7ff",
+          }}>
+            <div style={{ fontSize:32, marginBottom:10 }}>⚠️</div>
+            <div style={{ color:"#64748b", fontSize:14, fontWeight:600 }}>Map data unavailable</div>
+            <div style={{ color:"#93c5fd", fontSize:12, marginTop:4 }}>Check your internet connection</div>
+          </div>
+        )}
+      </div>
+
+      {/* AQI colour legend */}
+      <div style={{ display:"flex", flexWrap:"wrap", gap:"10px 18px", marginTop:14 }}>
+        {AQI_LEVELS.map(l => (
+          <div key={l.label} style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <div style={{ width:12, height:12, borderRadius:3, background:l.color, opacity:0.75 }} />
+            <span style={{ color:"#64748b", fontSize:12 }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -556,6 +942,9 @@ function App() {
             ))}
           </div>
         </div>
+
+        {/* ── BERLIN MAP ───────────────────────────────────────────────────── */}
+        <BerlinMap globalAqi={aqi} />
 
         {/* ── PERSONALISED RECOMMENDATIONS ────────────────────────────────── */}
         <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.3s" }}>
