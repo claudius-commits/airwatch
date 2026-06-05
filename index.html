@@ -191,6 +191,59 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
+// ── REAL DATA: PM2.5 → AQI (EPA standard formula) ───────────────────────────
+function pm25ToAQI(pm25) {
+  const bp = [
+    [0,     12.0,  0,   50 ],
+    [12.1,  35.4,  51,  100],
+    [35.5,  55.4,  101, 150],
+    [55.5,  150.4, 151, 200],
+    [150.5, 250.4, 201, 300],
+    [250.5, 500.4, 301, 500],
+  ];
+  const b = bp.find(([lo, hi]) => pm25 >= lo && pm25 <= hi) || bp[bp.length - 1];
+  return Math.round(((b[3] - b[2]) / (b[1] - b[0])) * (pm25 - b[0]) + b[2]);
+}
+
+// Fetch latest Berlin readings from OpenAQ v2 (CORS-enabled, no key needed)
+async function fetchOpenAQ() {
+  const res = await fetch(
+    'https://api.openaq.org/v2/latest?city=Berlin&country=DE&limit=30',
+    { headers: { 'Accept': 'application/json' } }
+  );
+  if (!res.ok) throw new Error('OpenAQ HTTP ' + res.status);
+  return res.json();
+}
+
+// Parse OpenAQ response → { aqi, pm25, pm10, no2, o3, co, stationCount, updatedAt }
+function parseOpenAQ(data) {
+  const results = data.results || [];
+  const avg = param => {
+    const vals = results
+      .flatMap(r => (r.measurements || []).filter(m => m.parameter === param))
+      .map(m => m.value)
+      .filter(v => v > 0 && v < 9999);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const pm25 = avg('pm25');
+  if (pm25 === null) return null;
+  const latest = results
+    .flatMap(r => r.measurements || [])
+    .map(m => new Date(m.lastUpdated))
+    .filter(Boolean)
+    .sort((a, b) => b - a)[0];
+  return {
+    aqi:          pm25ToAQI(pm25),
+    pm25:         Math.round(pm25 * 10) / 10,
+    pm10:         Math.round((avg('pm10') || pm25 * 1.5) * 10) / 10,
+    no2:          Math.round(avg('no2')  || 25),
+    o3:           Math.round(avg('o3')   || 38),
+    co:           Math.round((avg('co')  || 1.2) * 10) / 10,
+    stationCount: results.length,
+    updatedAt:    latest || new Date(),
+  };
+}
+
 // ── AQI CONFIG ──────────────────────────────────────────────────────────────
 const AQI_LEVELS = [
   { max:  50, label: "Good",            sub: "Air quality is ideal",                     color: "#16a34a", bg: "#f0fdf4", text: "#15803d", badge: "#dcfce7", glow: "rgba(22,163,74,0.2)"   },
@@ -520,7 +573,7 @@ function generateHistory(baseAqi, rangeId) {
   return { labels, aqiVals };
 }
 
-function HistoryChart({ globalAqi }) {
+function HistoryChart({ globalAqi, dataStatus }) {
   const canvasRef   = useRef(null);
   const chartRef    = useRef(null);
   const [range,   setRange]   = useState("7d");
@@ -628,7 +681,13 @@ function HistoryChart({ globalAqi }) {
       <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
         <div>
           <h2 className="section-label">POLLUTION HISTORY</h2>
-          <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Historical air quality data with adjustable timeframe</p>
+          <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+            Historical air quality · &nbsp;
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10,
+              background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa",
+            }}>⚠️ Simulated — not real historical data</span>
+          </p>
         </div>
         {/* Stat pills */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -695,7 +754,7 @@ function HistoryChart({ globalAqi }) {
 }
 
 // ── BERLIN MAP COMPONENT ─────────────────────────────────────────────────────
-function BerlinMap({ globalAqi }) {
+function BerlinMap({ globalAqi, dataStatus }) {
   const mapContainerRef = useRef(null);
   const mapRef          = useRef(null);
   const layersRef       = useRef({});
@@ -856,9 +915,14 @@ function BerlinMap({ globalAqi }) {
           <h2 className="section-label">BERLIN AIR QUALITY MAP</h2>
           <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>Click a district or search by postal code</p>
         </div>
-        <span style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe", fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
-          12 Bezirke
-        </span>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <span style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe", fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
+            12 Bezirke
+          </span>
+          <span style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20 }}>
+            ⚠️ AQI values simulated
+          </span>
+        </div>
       </div>
 
       {/* Postal code search */}
@@ -996,12 +1060,43 @@ function App() {
   const [pollutants,   setPollutants]   = useState(simulatePollutants(73));
   const [forecast,     setForecast]     = useState(generateForecast(73));
   const [profile,      setProfile]      = useState("general");
+  const [dataStatus,   setDataStatus]   = useState("connecting"); // "connecting" | "live" | "demo"
+  const [stationCount, setStationCount] = useState(0);
+  const [realUpdatedAt,setRealUpdatedAt]= useState(null);
   const [showRecs,     setShowRecs]     = useState(true);
   const [location,     setLocation]     = useState("Berlin, Germany");
   const [lastUpdated,  setLastUpdated]  = useState(new Date());
   const [prevAqi,      setPrevAqi]      = useState(73);
   const [trending,     setTrending]     = useState("stable"); // up/down/stable
   const [tick,         setTick]         = useState(0);
+
+  // ── Fetch real data from OpenAQ on mount, then every 5 minutes ──────────
+  useEffect(() => {
+    function doFetch() {
+      setDataStatus("connecting");
+      fetchOpenAQ()
+        .then(parseOpenAQ)
+        .then(parsed => {
+          if (!parsed) { setDataStatus("demo"); return; }
+          setAqi(parsed.aqi);
+          setPollutants({
+            pm25: parsed.pm25,
+            pm10: parsed.pm10,
+            no2:  parsed.no2,
+            o3:   parsed.o3,
+            co:   parsed.co,
+          });
+          setStationCount(parsed.stationCount);
+          setRealUpdatedAt(parsed.updatedAt);
+          setForecast(generateForecast(parsed.aqi));
+          setDataStatus("live");
+        })
+        .catch(() => setDataStatus("demo"));
+    }
+    doFetch();
+    const id = setInterval(doFetch, 5 * 60 * 1000); // refresh every 5 min
+    return () => clearInterval(id);
+  }, []);
 
   // Simulate real-time updates every 8 seconds
   useEffect(() => {
@@ -1054,8 +1149,18 @@ function App() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full pulse-ring" style={{ background: level.color }} />
-              <span className="text-xs font-semibold" style={{ color: "#93c5fd", letterSpacing: "0.08em" }}>LIVE</span>
+              <div className="w-2 h-2 rounded-full pulse-ring" style={{
+                background: dataStatus === "live" ? "#16a34a" : dataStatus === "connecting" ? "#f59e0b" : "#f97316"
+              }} />
+              <span className="text-xs font-semibold" style={{
+                color: dataStatus === "live" ? "#16a34a" : dataStatus === "connecting" ? "#f59e0b" : "#f97316",
+                letterSpacing: "0.08em"
+              }}>
+                {dataStatus === "live" ? "LIVE DATA" : dataStatus === "connecting" ? "CONNECTING…" : "DEMO DATA"}
+              </span>
+              {dataStatus === "live" && stationCount > 0 && (
+                <span className="text-xs" style={{ color: "#93c5fd" }}>· {stationCount} Berlin stations</span>
+              )}
             </div>
             <h1 className="text-2xl font-black gradient-text mt-1">AirWatch</h1>
           </div>
@@ -1066,7 +1171,13 @@ function App() {
               </svg>
               <span className="text-sm font-medium" style={{ color: "#1e40af" }}>{location}</span>
             </div>
-            <span className="text-xs" style={{ color: "#93c5fd" }}>Updated {timeStr}</span>
+            <span className="text-xs" style={{ color: "#93c5fd" }}>
+              {dataStatus === "live" && realUpdatedAt
+                ? "Station data: " + realUpdatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : dataStatus === "demo"
+                ? "⚠️ Showing simulated data"
+                : "Connecting to OpenAQ…"}
+            </span>
             <span className="text-xs" style={{ color: "#bfdbfe", marginTop: 3, display: "block" }}>
               <span style={{ color: "#cbd5e1" }}>Sources: </span>
               <a href="https://openaq.org" target="_blank" rel="noopener" style={{ color: "#3b82f6", textDecoration: "none", fontWeight: 600 }}>OpenAQ</a>
@@ -1152,7 +1263,9 @@ function App() {
         <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.2s" }}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="section-label">6-HOUR FORECAST</h2>
-            <span className="text-xs px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "#93c5fd" }}>Simulated</span>
+            <span className="text-xs px-2 py-1 rounded-full" style={{
+              background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa", fontWeight: 600,
+            }}>⚠️ Forecast simulated</span>
           </div>
           <div className="flex gap-2 items-end">
             {forecast.map((item, i) => (
@@ -1171,10 +1284,10 @@ function App() {
         </div>
 
         {/* ── HISTORY CHART ────────────────────────────────────────────────── */}
-        <HistoryChart globalAqi={aqi} />
+        <HistoryChart globalAqi={aqi} dataStatus={dataStatus} />
 
         {/* ── BERLIN MAP ───────────────────────────────────────────────────── */}
-        <BerlinMap globalAqi={aqi} />
+        <BerlinMap globalAqi={aqi} dataStatus={dataStatus} />
 
         {/* ── PERSONALISED RECOMMENDATIONS ────────────────────────────────── */}
         <div className="card rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.3s" }}>
@@ -1257,7 +1370,9 @@ function App() {
         {/* Footer */}
         <div className="text-center py-4">
           <p className="text-xs" style={{ color: "#93c5fd" }}>
-            AirWatch — Simulated data for demonstration purposes · Updates every 8s
+            {dataStatus === "live"
+              ? `AirWatch · Live data via OpenAQ · ${stationCount} Berlin stations · Forecast & history simulated`
+              : "AirWatch · Demo mode — live data unavailable · All values simulated"}
           </p>
         </div>
 
