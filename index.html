@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirWatch — Client Preview</title>
+  <script>
+    (function() {
+      const PASS = "airwatch2026";
+      const SESSION_KEY = "aw_auth";
+      const EXPIRY_HOURS = 8;
+
+      function isAuthed() {
+        try {
+          const data = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+          return data && Date.now() < data.exp;
+        } catch { return false; }
+      }
+
+      function renderGate() {
+        document.documentElement.style.background = "#0a0f1e";
+        document.addEventListener("DOMContentLoaded", function() {
+          document.body.style.cssText = "margin:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Inter',sans-serif;";
+          document.body.innerHTML = `
+            <div id="gate" style="width:100%;max-width:400px;padding:2rem;">
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:2.5rem;backdrop-filter:blur(20px);">
+                <div style="text-align:center;margin-bottom:2rem;">
+                  <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:1rem;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;"></div>
+                    <span style="color:rgba(255,255,255,0.35);font-size:11px;font-weight:600;letter-spacing:0.1em;">CLIENT PREVIEW</span>
+                  </div>
+                  <h1 style="color:#fff;font-size:2rem;font-weight:900;margin:0 0 0.5rem;">AirWatch</h1>
+                  <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;">Real-Time Air Quality Dashboard</p>
+                </div>
+                <div id="err" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:12px;margin-bottom:1rem;color:#fca5a5;font-size:13px;text-align:center;">
+                  Incorrect password. Please try again.
+                </div>
+                <input id="pw" type="password" placeholder="Enter preview password"
+                  style="width:100%;box-sizing:border-box;padding:14px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:15px;outline:none;margin-bottom:12px;"
+                  onkeydown="if(event.key==='Enter')window._checkPass()"
+                  onfocus="this.style.borderColor='rgba(46,117,182,0.6)'"
+                  onblur="this.style.borderColor='rgba(255,255,255,0.12)'" />
+                <button onclick="window._checkPass()"
+                  style="width:100%;padding:14px;background:#2E75B6;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s;"
+                  onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                  View Preview →
+                </button>
+                <p style="color:rgba(255,255,255,0.2);font-size:12px;text-align:center;margin:1.5rem 0 0;">
+                  Shared by your agency · Confidential
+                </p>
+              </div>
+            </div>`;
+          document.getElementById("pw").focus();
+        });
+      }
+
+      window._checkPass = function() {
+        const input = document.getElementById("pw").value;
+        if (input === PASS) {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ exp: Date.now() + EXPIRY_HOURS * 3600000 }));
+          location.reload();
+        } else {
+          document.getElementById("err").style.display = "block";
+          document.getElementById("pw").value = "";
+          document.getElementById("pw").focus();
+        }
+      };
+
+      if (!isAuthed()) {
+        // Block the page from rendering
+        document.addEventListener("DOMContentLoaded", function() {
+          // Remove root content if it somehow rendered
+          var root = document.getElementById("root");
+          if (root) root.innerHTML = "";
+        });
+        renderGate();
+        // Stop all further scripts from running after this
+        document.addEventListener("DOMContentLoaded", function(e) {
+          var scripts = document.querySelectorAll('script[type="text/babel"]');
+          scripts.forEach(function(s) { s.type = "text/plain"; });
+        }, true);
+        throw new Error("AUTH_REQUIRED");
+      }
+    })();
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #0a0f1e; }
+
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,255,255,0.15); }
+      70%  { transform: scale(1);    box-shadow: 0 0 0 20px rgba(255,255,255,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0px); }
+      50%      { transform: translateY(-6px); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes bar-fill {
+      from { width: 0%; }
+      to   { width: var(--target-width); }
+    }
+
+    .pulse-ring { animation: pulse-ring 2.5s ease-in-out infinite; }
+    .float      { animation: float 4s ease-in-out infinite; }
+    .fade-in-up { animation: fadeInUp 0.5s ease both; }
+    .spin-slow  { animation: spin-slow 8s linear infinite; }
+
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .glass-hover:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.14);
+      transition: all 0.3s ease;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .aqi-glow {
+      filter: drop-shadow(0 0 30px var(--glow-color));
+    }
+    .bar-animated {
+      animation: bar-fill 1.2s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .profile-btn {
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    .profile-btn:hover { transform: translateY(-1px); }
+    .profile-btn.active { transform: translateY(0); }
+
+    .forecast-bar {
+      transition: height 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+    .toggle-track {
+      transition: background 0.3s ease;
+    }
+    .toggle-thumb {
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── AQI CONFIG ──────────────────────────────────────────────────────────────
+const AQI_LEVELS = [
+  { max:  50, label: "Good",            sub: "Air quality is ideal",                     color: "#22c55e", bg: "rgba(34,197,94,0.12)",   text: "#86efac", badge: "#166534", glow: "rgba(34,197,94,0.4)"  },
+  { max: 100, label: "Moderate",        sub: "Acceptable for most people",               color: "#eab308", bg: "rgba(234,179,8,0.12)",   text: "#fde047", badge: "#713f12", glow: "rgba(234,179,8,0.4)"  },
+  { max: 150, label: "Sensitive",       sub: "Sensitive groups may be affected",         color: "#f97316", bg: "rgba(249,115,22,0.12)",  text: "#fdba74", badge: "#7c2d12", glow: "rgba(249,115,22,0.4)" },
+  { max: 200, label: "Unhealthy",       sub: "Everyone may begin to feel effects",       color: "#ef4444", bg: "rgba(239,68,68,0.12)",   text: "#fca5a5", badge: "#7f1d1d", glow: "rgba(239,68,68,0.4)"  },
+  { max: 300, label: "Very Unhealthy",  sub: "Health warnings for everyone",             color: "#a855f7", bg: "rgba(168,85,247,0.12)",  text: "#d8b4fe", badge: "#4a1d96", glow: "rgba(168,85,247,0.4)" },
+  { max: 500, label: "Hazardous",       sub: "Emergency conditions — stay indoors",      color: "#be123c", bg: "rgba(190,18,60,0.12)",   text: "#fda4af", badge: "#881337", glow: "rgba(190,18,60,0.4)"  },
+];
+
+function getAQILevel(aqi) {
+  return AQI_LEVELS.find(l => aqi <= l.max) || AQI_LEVELS[AQI_LEVELS.length - 1];
+}
+
+// ── PROFILES ────────────────────────────────────────────────────────────────
+const PROFILES = [
+  { id: "general",  label: "General",  icon: "👤", desc: "Healthy adult" },
+  { id: "asthma",   label: "Asthma",   icon: "🫁", desc: "Respiratory condition" },
+  { id: "athlete",  label: "Athlete",  icon: "🏃", desc: "High activity level" },
+  { id: "elderly",  label: "Elderly",  icon: "🧓", desc: "65+ years old" },
+  { id: "child",    label: "Child",    icon: "👶", desc: "Under 12 years old" },
+];
+
+const RECOMMENDATIONS = {
+  general: {
+    good:       ["✅ Great day for outdoor activities","🪟 Open windows to ventilate your home","🚶 Enjoy your walk or run outside"],
+    moderate:   ["⚠️ Unusually sensitive people should consider limiting prolonged outdoor exertion","🪟 Ventilation is generally fine","💧 Stay hydrated during outdoor activities"],
+    sensitive:  ["⚠️ Reduce prolonged or heavy outdoor exertion","🏠 Take breaks indoors if you feel symptoms","🪟 Keep windows closed during peak hours"],
+    unhealthy:  ["🚫 Avoid prolonged outdoor exertion","🏠 Stay indoors when possible","😷 Wear a mask if you must go outside","🌬️ Run your air purifier on high"],
+    vunhealthy: ["🚫 Avoid all outdoor physical activity","🏠 Stay indoors with windows closed","😷 N95 mask essential if outdoors","🌬️ Air purifier on maximum — check filter health"],
+    hazardous:  ["🚨 Stay indoors — do not go outside","🔒 Seal gaps around doors and windows","😷 N95/P100 mask if evacuation needed","📞 Check on vulnerable neighbours"],
+  },
+  asthma: {
+    good:       ["✅ Good conditions — carry your inhaler as always","🌿 Pollen levels may still be a factor — check local forecasts","🪟 Keep rescue inhaler accessible"],
+    moderate:   ["⚠️ Monitor your breathing throughout the day","💊 Ensure your reliever inhaler is with you","🌡️ Avoid additional triggers (smoke, dust, pets)"],
+    sensitive:  ["🚫 Limit outdoor time — especially near traffic","💊 Consider preventive inhaler use before going out","🏠 Keep windows closed, run your purifier","📋 Review your asthma action plan"],
+    unhealthy:  ["🚨 High risk — stay indoors","💊 Use preventive medication as prescribed","📞 Contact your doctor if symptoms worsen","🌬️ Air purifier essential — replace filter if needed"],
+    vunhealthy: ["🚨 Emergency risk level — do not go outdoors","💊 Follow your emergency asthma protocol","📞 Call your doctor or NHS 111 if symptoms occur","🏥 Know your nearest A&E location"],
+    hazardous:  ["🚨 CRITICAL — treat as medical emergency risk","📞 Seek medical advice proactively","💊 Have your emergency medication ready","🏠 Seal your home and minimise movement"],
+  },
+  athlete: {
+    good:       ["✅ Perfect conditions for training","🏋️ No restrictions — push your performance","📊 Optimal air for high-intensity intervals","🌬️ Ideal for long-distance runs"],
+    moderate:   ["⚠️ Reduce intensity of outdoor training slightly","⏱️ Avoid extended sessions above 90 minutes outdoors","🏠 Consider moving high-intensity work indoors","💧 Increase hydration — your lungs work harder in moderate air"],
+    sensitive:  ["🚫 Move training indoors today","🏠 Gym or indoor track recommended","💧 Extra hydration if you must train outside","⏱️ Cut session length by at least 50%"],
+    unhealthy:  ["🚫 Cancel outdoor training — reschedule","🏠 Indoor gym only, with good ventilation","😷 Do not run or cycle outdoors","📉 Accept reduced performance this day — health first"],
+    vunhealthy: ["🚫 No training outdoors or in poorly ventilated spaces","🏠 Light indoor activity only","💤 Rest and recovery day recommended","📅 Plan training around forecast improvements"],
+    hazardous:  ["🚫 Complete rest day — no exertion","🏠 Strictly indoors","💧 Stay hydrated even at rest","📅 Resume training only when AQI returns to Good/Moderate"],
+  },
+  elderly: {
+    good:       ["✅ Excellent air — enjoy outdoor time","🌳 Ideal for a walk in the park","☀️ Combine with sunlight for Vitamin D","👥 Good day for social outdoor activities"],
+    moderate:   ["⚠️ Fine for most activities — take it easy","⏱️ Avoid strenuous activity during midday","💧 Stay hydrated","🏠 Rest indoors if you feel short of breath"],
+    sensitive:  ["⚠️ Limit outdoor time — especially in traffic areas","🏠 Morning or evening walks when air is cleaner","💊 Take regular medications as prescribed","📞 Tell someone your plans before going out"],
+    unhealthy:  ["🚫 Stay indoors — avoid all outdoor activity","💊 Ensure all regular medications are taken","📞 Check in with family or carers","🌬️ Run your air purifier continuously"],
+    vunhealthy: ["🚨 High risk — do not go outdoors","📞 Arrange for shopping or errands to be done by others","💊 Monitor any respiratory or cardiac symptoms closely","📞 Contact your GP if you feel unwell"],
+    hazardous:  ["🚨 CRITICAL — stay indoors at all times","📞 Proactively contact your GP or NHS 111","💊 Have all medications within easy reach","📞 Ensure a family member or carer checks on you"],
+  },
+  child: {
+    good:       ["✅ Perfect for outdoor play — enjoy freely","🏫 School outdoor activities are safe","⚽ Sports and games fully supported","🌿 Great day for nature walks and exploration"],
+    moderate:   ["⚠️ Fine for normal play — watch for any coughing","⏱️ Limit very intense outdoor sports to under an hour","💧 Keep children well hydrated","🏠 Bring inside if any child shows symptoms"],
+    sensitive:  ["⚠️ Reduce outdoor playtime","🏠 Indoor activities recommended for the afternoon","⚽ PE class should be moved indoors if possible","💧 Extra water, and monitor for coughing or fatigue"],
+    unhealthy:  ["🚫 Keep children indoors","🏫 No outdoor PE or playtime","🌬️ Run air purifier in play and sleep areas","📋 Inform school or nursery of conditions"],
+    vunhealthy: ["🚨 Do not let children outdoors","🏠 Keep all windows closed","🌬️ Air purifier on high in all rooms","📞 Contact your GP if a child has respiratory symptoms"],
+    hazardous:  ["🚨 CRITICAL — children must stay indoors","📞 Call NHS 111 if any child has breathing difficulty","🏠 Seal home as much as possible","📞 Inform school — no travel to school today"],
+  },
+};
+
+function getProfileRecs(profile, aqi) {
+  const recs = RECOMMENDATIONS[profile];
+  if (aqi <= 50)  return recs.good;
+  if (aqi <= 100) return recs.moderate;
+  if (aqi <= 150) return recs.sensitive;
+  if (aqi <= 200) return recs.unhealthy;
+  if (aqi <= 300) return recs.vunhealthy;
+  return recs.hazardous;
+}
+
+// ── POLLUTANTS ───────────────────────────────────────────────────────────────
+const POLLUTANTS = [
+  { id: "pm25",  label: "PM₂.₅",  unit: "µg/m³", max: 150, good: 12  },
+  { id: "pm10",  label: "PM₁₀",   unit: "µg/m³", max: 200, good: 20  },
+  { id: "no2",   label: "NO₂",    unit: "ppb",    max: 200, good: 40  },
+  { id: "o3",    label: "O₃",     unit: "ppb",    max: 120, good: 54  },
+  { id: "co",    label: "CO",     unit: "ppm",    max: 15,  good: 4.4 },
+];
+
+// ── SIMULATE DATA ────────────────────────────────────────────────────────────
+function simulatePollutants(aqi) {
+  const factor = aqi / 150;
+  return {
+    pm25: Math.round(aqi * 0.6 + Math.random() * 8),
+    pm10: Math.round(aqi * 0.9 + Math.random() * 12),
+    no2:  Math.round(20 + factor * 80 + Math.random() * 15),
+    o3:   Math.round(30 + factor * 60 + Math.random() * 10),
+    co:   parseFloat((1.2 + factor * 6 + Math.random() * 0.8).toFixed(1)),
+  };
+}
+
+function generateForecast(baseAqi) {
+  const hours = [];
+  const now = new Date();
+  let current = baseAqi;
+  for (let i = 0; i < 6; i++) {
+    const h = new Date(now.getTime() + i * 3600000);
+    const delta = (Math.random() - 0.45) * 30;
+    current = Math.max(10, Math.min(400, current + delta));
+    hours.push({ hour: h.getHours(), aqi: Math.round(current) });
+  }
+  return hours;
+}
+
+// ── GAUGE COMPONENT ─────────────────────────────────────────────────────────
+function AQIGauge({ aqi, level }) {
+  const radius = 80;
+  const stroke = 12;
+  const norm   = radius - stroke / 2;
+  const circ   = Math.PI * norm; // half circle
+  const pct    = Math.min(aqi / 500, 1);
+  const offset = circ * (1 - pct);
+
+  const gradId = "aqiGrad";
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 200, height: 120 }}>
+      <svg width="200" height="120" viewBox="0 0 200 120">
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="#22c55e" />
+            <stop offset="30%"  stopColor="#eab308" />
+            <stop offset="55%"  stopColor="#f97316" />
+            <stop offset="75%"  stopColor="#ef4444" />
+            <stop offset="90%"  stopColor="#a855f7" />
+            <stop offset="100%" stopColor="#be123c" />
+          </linearGradient>
+        </defs>
+        {/* Track */}
+        <path
+          d={`M ${stroke/2} 100 A ${norm} ${norm} 0 0 1 ${200-stroke/2} 100`}
+          fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} strokeLinecap="round"
+        />
+        {/* Fill */}
+        <path
+          d={`M ${stroke/2} 100 A ${norm} ${norm} 0 0 1 ${200-stroke/2} 100`}
+          fill="none" stroke={`url(#${gradId})`} strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)" }}
+        />
+        {/* Needle dot */}
+        {(() => {
+          const angle = Math.PI * pct;
+          const cx = 100 - norm * Math.cos(angle);
+          const cy = 100 - norm * Math.sin(angle);
+          return (
+            <circle cx={cx} cy={cy} r={7} fill={level.color}
+              style={{ filter: `drop-shadow(0 0 8px ${level.color})`, transition: "all 1.2s cubic-bezier(0.4,0,0.2,1)" }} />
+          );
+        })()}
+      </svg>
+      {/* Center label */}
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center" style={{ bottom: 4 }}>
+        <span className="text-5xl font-black" style={{ color: level.color, textShadow: `0 0 30px ${level.glow}`, transition: "color 0.8s ease" }}>
+          {aqi}
+        </span>
+        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>AQI</span>
+      </div>
+    </div>
+  );
+}
+
+// ── POLLUTANT BAR ────────────────────────────────────────────────────────────
+function PollutantBar({ p, value, level }) {
+  const pct = Math.min((value / p.max) * 100, 100);
+  const good = (p.good / p.max) * 100;
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}
+          dangerouslySetInnerHTML={{ __html: p.label }} />
+        <span className="text-xs font-bold" style={{ color: level.text }}>
+          {value} <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>{p.unit}</span>
+        </span>
+      </div>
+      <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        {/* Good threshold marker */}
+        <div className="absolute top-0 bottom-0 w-px" style={{ left: `${good}%`, background: "rgba(255,255,255,0.2)" }} />
+        {/* Fill */}
+        <div className="h-full rounded-full" style={{
+          width: `${pct}%`, background: level.color,
+          boxShadow: `0 0 8px ${level.glow}`,
+          transition: "width 1.2s cubic-bezier(0.4,0,0.2,1), background 0.8s ease"
+        }} />
+      </div>
+    </div>
+  );
+}
+
+// ── FORECAST BAR ─────────────────────────────────────────────────────────────
+function ForecastBar({ item, maxAqi, index }) {
+  const level   = getAQILevel(item.aqi);
+  const heightPct = Math.max(10, (item.aqi / maxAqi) * 100);
+  const label   = item.hour === 0 ? "12am" : item.hour < 12 ? `${item.hour}am` : item.hour === 12 ? "12pm" : `${item.hour - 12}pm`;
+  return (
+    <div className="flex flex-col items-center gap-2 flex-1" style={{ animationDelay: `${index * 0.1}s` }}>
+      <span className="text-xs font-bold" style={{ color: level.text }}>{item.aqi}</span>
+      <div className="w-full flex items-end justify-center" style={{ height: 64 }}>
+        <div className="w-full rounded-t-lg forecast-bar" style={{
+          height: `${heightPct}%`,
+          background: `linear-gradient(to top, ${level.color}, ${level.color}88)`,
+          boxShadow: `0 -4px 12px ${level.glow}`,
+          minHeight: 6,
+        }} />
+      </div>
+      <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
+    </div>
+  );
+}
+
+// ── TOGGLE ──────────────────────────────────────────────────────────────────
+function Toggle({ on, onChange, label }) {
+  return (
+    <button onClick={() => onChange(!on)} className="flex items-center gap-2 cursor-pointer">
+      <div className="toggle-track w-10 h-5 rounded-full relative" style={{ background: on ? "#2E75B6" : "rgba(255,255,255,0.1)" }}>
+        <div className="toggle-thumb absolute top-0.5 w-4 h-4 rounded-full bg-white" style={{ left: on ? "calc(100% - 18px)" : "2px" }} />
+      </div>
+      <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{label}</span>
+    </button>
+  );
+}
+
+// ── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [aqi,          setAqi]          = useState(73);
+  const [pollutants,   setPollutants]   = useState(simulatePollutants(73));
+  const [forecast,     setForecast]     = useState(generateForecast(73));
+  const [profile,      setProfile]      = useState("general");
+  const [showRecs,     setShowRecs]     = useState(true);
+  const [location,     setLocation]     = useState("Berlin, Germany");
+  const [lastUpdated,  setLastUpdated]  = useState(new Date());
+  const [prevAqi,      setPrevAqi]      = useState(73);
+  const [trending,     setTrending]     = useState("stable"); // up/down/stable
+  const [tick,         setTick]         = useState(0);
+
+  // Simulate real-time updates every 8 seconds
+  useEffect(() => {
+    const id = setInterval(() => {
+      setAqi(prev => {
+        const delta  = (Math.random() - 0.48) * 18;
+        const next   = Math.round(Math.max(12, Math.min(320, prev + delta)));
+        setPrevAqi(prev);
+        setTrending(next > prev + 3 ? "up" : next < prev - 3 ? "down" : "stable");
+        setPollutants(simulatePollutants(next));
+        setLastUpdated(new Date());
+        setTick(t => t + 1);
+        return next;
+      });
+      setForecast(f => {
+        // Shift forecast forward
+        const updated = f.map((item, i) => {
+          if (i === 0) return { ...item, aqi: Math.round(Math.max(12, Math.min(320, item.aqi + (Math.random()-0.5)*10))) };
+          return item;
+        });
+        return updated;
+      });
+    }, 8000);
+    return () => clearInterval(id);
+  }, []);
+
+  const level = getAQILevel(aqi);
+  const recs  = getProfileRecs(profile, aqi);
+  const maxForecast = Math.max(...forecast.map(f => f.aqi), 50);
+  const now   = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  // Find primary pollutant
+  const primaryPollutant = "PM₂.₅";
+
+  return (
+    <div className="min-h-screen p-4 md:p-8" style={{ background: "linear-gradient(135deg, #0a0f1e 0%, #0d1530 50%, #0a0f1e 100%)" }}>
+      {/* Ambient glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute rounded-full" style={{
+          width: 600, height: 600, top: -200, left: "50%", transform: "translateX(-50%)",
+          background: `radial-gradient(circle, ${level.color}18 0%, transparent 70%)`,
+          transition: "background 1.5s ease"
+        }} />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto space-y-4">
+
+        {/* ── HEADER ──────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ background: level.color, boxShadow: `0 0 8px ${level.color}` }}>
+                <div className="w-2 h-2 rounded-full pulse-ring" style={{ background: level.color }} />
+              </div>
+              <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>LIVE</span>
+            </div>
+            <h1 className="text-2xl font-black gradient-text mt-1">AirWatch</h1>
+          </div>
+          <div className="text-right">
+            <div className="flex items-center gap-1 justify-end">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>{location}</span>
+            </div>
+            <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Updated {timeStr}</span>
+          </div>
+        </div>
+
+        {/* ── HERO CARD ────────────────────────────────────────────────────── */}
+        <div className="glass rounded-3xl p-6 md:p-8 fade-in-up" style={{ border: `1px solid ${level.color}22` }}>
+          <div className="flex flex-col md:flex-row items-center gap-8">
+
+            {/* Gauge */}
+            <div className="flex-shrink-0 float">
+              <AQIGauge aqi={aqi} level={level} />
+            </div>
+
+            {/* Status */}
+            <div className="flex-1 space-y-4 text-center md:text-left">
+              <div>
+                <div className="flex items-center gap-3 justify-center md:justify-start flex-wrap">
+                  <span className="text-4xl font-black" style={{ color: level.color, textShadow: `0 0 40px ${level.glow}`, transition: "color 0.8s ease" }}>
+                    {level.label}
+                  </span>
+                  {/* Trend indicator */}
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <span style={{ fontSize: 12, color: trending === "up" ? "#ef4444" : trending === "down" ? "#22c55e" : "rgba(255,255,255,0.4)" }}>
+                      {trending === "up" ? "↑" : trending === "down" ? "↓" : "→"}
+                    </span>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      {trending === "up" ? "Rising" : trending === "down" ? "Improving" : "Stable"}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-lg mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{level.sub}</p>
+              </div>
+
+              {/* Context chips */}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: level.bg, color: level.text, border: `1px solid ${level.color}33` }}>
+                  Primary: {primaryPollutant}
+                </div>
+                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                  AQI {aqi} / 500
+                </div>
+                <div className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+                  {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                </div>
+              </div>
+
+              {/* Plain-language context */}
+              <div className="p-4 rounded-2xl" style={{ background: level.bg, border: `1px solid ${level.color}22` }}>
+                <p className="text-sm font-medium" style={{ color: level.text }}>
+                  {aqi <= 50  && "✅ The air is clean and fresh. No restrictions apply — breathe easy and enjoy the outdoors."}
+                  {aqi > 50  && aqi <= 100 && "🟡 Air quality is acceptable. Most people can go about their day normally."}
+                  {aqi > 100 && aqi <= 150 && "🟠 Air quality is poor for sensitive groups. If you have asthma or heart disease, reduce outdoor time."}
+                  {aqi > 150 && aqi <= 200 && "🔴 Unhealthy air — everyone may start to feel effects. Limit outdoor time and avoid heavy exertion."}
+                  {aqi > 200 && aqi <= 300 && "🟣 Very unhealthy — health warnings in effect for everyone. Stay indoors and run your air purifier."}
+                  {aqi > 300 && "🚨 Hazardous — emergency conditions. Do not go outside. Seal windows and doors."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── POLLUTANT BREAKDOWN ──────────────────────────────────────────── */}
+        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <h2 className="text-sm font-bold mb-4" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>POLLUTANT BREAKDOWN</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {POLLUTANTS.map(p => (
+              <PollutantBar key={p.id} p={p} value={pollutants[p.id]} level={level} />
+            ))}
+          </div>
+          <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
+            Vertical line indicates WHO safe threshold. Values update every 8 seconds.
+          </p>
+        </div>
+
+        {/* ── FORECAST ────────────────────────────────────────────────────── */}
+        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.2s" }}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>6-HOUR FORECAST</h2>
+            <span className="text-xs px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>Simulated</span>
+          </div>
+          <div className="flex gap-2 items-end">
+            {forecast.map((item, i) => (
+              <ForecastBar key={i} item={item} maxAqi={maxForecast} index={i} />
+            ))}
+          </div>
+          {/* AQI legend */}
+          <div className="flex flex-wrap gap-3 mt-4">
+            {AQI_LEVELS.map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{l.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── PERSONALISED RECOMMENDATIONS ────────────────────────────────── */}
+        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.3s" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>PERSONALISED ADVICE</h2>
+            <Toggle on={showRecs} onChange={setShowRecs} label="Show recommendations" />
+          </div>
+
+          {/* Profile selector */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {PROFILES.map(p => (
+              <button
+                key={p.id}
+                onClick={() => setProfile(p.id)}
+                className={`profile-btn flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold ${profile === p.id ? "active" : ""}`}
+                style={{
+                  background: profile === p.id ? level.bg : "rgba(255,255,255,0.04)",
+                  border:     profile === p.id ? `1px solid ${level.color}44` : "1px solid rgba(255,255,255,0.08)",
+                  color:      profile === p.id ? level.text : "rgba(255,255,255,0.4)",
+                }}
+              >
+                <span>{p.icon}</span>
+                <div className="text-left">
+                  <div>{p.label}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Selected profile description */}
+          <div className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.3)" }}>
+            Showing advice for: <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>
+              {PROFILES.find(p => p.id === profile)?.desc}
+            </span>
+          </div>
+
+          {/* Recommendations */}
+          {showRecs && (
+            <div className="space-y-2">
+              {recs.map((rec, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl fade-in-up glass-hover"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", animationDelay: `${i * 0.06}s` }}>
+                  <span className="text-sm leading-snug" style={{ color: "rgba(255,255,255,0.75)" }}>{rec}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {!showRecs && (
+            <div className="text-center py-6 text-sm" style={{ color: "rgba(255,255,255,0.2)" }}>
+              Toggle recommendations on to see personalised advice
+            </div>
+          )}
+        </div>
+
+        {/* ── AQI SCALE REFERENCE ──────────────────────────────────────────── */}
+        <div className="glass rounded-3xl p-6 fade-in-up" style={{ animationDelay: "0.4s" }}>
+          <h2 className="text-sm font-bold mb-4" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em" }}>AQI SCALE REFERENCE</h2>
+          <div className="space-y-2">
+            {AQI_LEVELS.map((l, i) => {
+              const prev = i === 0 ? 0 : AQI_LEVELS[i-1].max + 1;
+              const isActive = aqi <= l.max && (i === 0 || aqi > AQI_LEVELS[i-1].max);
+              return (
+                <div key={l.label} className="flex items-center gap-3 p-2 rounded-xl" style={{
+                  background: isActive ? l.bg : "transparent",
+                  border: isActive ? `1px solid ${l.color}33` : "1px solid transparent",
+                  transition: "all 0.5s ease"
+                }}>
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: l.color, boxShadow: isActive ? `0 0 8px ${l.color}` : "none" }} />
+                  <div className="flex-1 flex items-center justify-between">
+                    <span className="text-sm font-semibold" style={{ color: isActive ? l.text : "rgba(255,255,255,0.5)" }}>{l.label}</span>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>{prev}–{l.max}</span>
+                  </div>
+                  {isActive && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: l.color, color: "#000" }}>NOW</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-4">
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.15)" }}>
+            AirWatch — Simulated data for demonstration purposes · Updates every 8s
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
